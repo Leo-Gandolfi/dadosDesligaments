@@ -100,29 +100,38 @@ def extract_data(pdf_path, excel_out_path):
         val_consid = ""
         aprovador_id = ""
         aprovador_nome = ""
-        
+
         idx_dir = -1
         for j, line in enumerate(lines):
             if re.search(r"Diretoria\s*/Ger.ncia de Unidade de Neg.cio", line):
                 idx_dir = j
                 break
-                
+
         if idx_dir != -1:
-            # Find "Considerações" after idx_dir
+            # Find "Considerações" after the Diretoria header
             idx_consid = -1
-            for j in range(idx_dir, min(idx_dir + 10, len(lines))):
+            for j in range(idx_dir + 1, len(lines)):
                 if re.search(r"Considera..es", lines[j]):
                     idx_consid = j
                     break
-                    
-            if idx_consid != -1 and idx_consid + 1 < len(lines):
-                line_data = lines[idx_consid + 1]
-                if line_data not in ["Reprovador", "Fluxo de Aprovaes"] and "Fluxo de" not in line_data:
-                    val_consid = line_data
-                    if idx_consid + 2 < len(lines):
-                        line_readm = lines[idx_consid + 2]
-                        if line_readm not in ["Fluxo de Aprovaes", "Ok", "Reprovador"] and "Fluxo de" not in line_readm:
-                            val_dir_readm = line_readm
+
+            # "Condições de Readmissão" label sits between idx_dir and idx_consid;
+            # collect everything between that label and "Considerações" as the value.
+            if idx_consid != -1:
+                for j in range(idx_dir + 1, idx_consid):
+                    if re.search(r"Condi..es de Readmiss.o", lines[j]):
+                        readm_parts = [lines[k] for k in range(j + 1, idx_consid)]
+                        val_dir_readm = " ".join(readm_parts).strip()
+                        break
+
+            # Collect ALL lines of Considerações until "Fluxo de Aprova" or end
+            if idx_consid != -1:
+                consid_parts = []
+                for k in range(idx_consid + 1, len(lines)):
+                    if re.search(r"Fluxo de Aprova", lines[k]):
+                        break
+                    consid_parts.append(lines[k])
+                val_consid = " ".join(consid_parts).strip()
 
         # Aprovador and Nome do Aprovador: ALWAYS the first row in "Fluxo de Aprovações"
         # Strategy: find the Fluxo header, then scan for the FIRST date (DD.MM.YYYY).

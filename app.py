@@ -84,19 +84,33 @@ def extract_data_from_bytes(pdf_bytes: bytes) -> pd.DataFrame:
                 break
 
         if idx_dir != -1:
+            # Find "Considerações" after the Diretoria header
             idx_consid = -1
-            for j in range(idx_dir, min(idx_dir + 10, len(lines))):
+            for j in range(idx_dir + 1, len(lines)):
                 if re.search(r"Considera..es", lines[j]):
                     idx_consid = j
                     break
-            if idx_consid != -1 and idx_consid + 1 < len(lines):
-                line_data = lines[idx_consid + 1]
-                if line_data not in ["Reprovador", "Fluxo de Aprovaes"] and "Fluxo de" not in line_data:
-                    val_consid = line_data
-                    if idx_consid + 2 < len(lines):
-                        lr = lines[idx_consid + 2]
-                        if lr not in ["Fluxo de Aprovaes", "Ok", "Reprovador"] and "Fluxo de" not in lr:
-                            val_dir_readm = lr
+
+            # "Condições de Readmissão" is the label between idx_dir and idx_consid.
+            # Its value is the line(s) between that label and "Considerações".
+            if idx_consid != -1:
+                for j in range(idx_dir + 1, idx_consid):
+                    if re.search(r"Condi..es de Readmiss.o", lines[j]):
+                        # value is everything between this label and idx_consid
+                        readm_parts = []
+                        for k in range(j + 1, idx_consid):
+                            readm_parts.append(lines[k])
+                        val_dir_readm = " ".join(readm_parts).strip()
+                        break
+
+            # Collect ALL lines of Considerações until "Fluxo de Aprova" or end
+            if idx_consid != -1:
+                consid_parts = []
+                for k in range(idx_consid + 1, len(lines)):
+                    if re.search(r"Fluxo de Aprova", lines[k]):
+                        break
+                    consid_parts.append(lines[k])
+                val_consid = " ".join(consid_parts).strip()
 
         # ── Aprovador (FIRST row in Fluxo) ───────────────
         aprovador_id   = ""
