@@ -1,0 +1,10 @@
+# Secrets - NUNCA subir para o repositório
+.streamlit/secrets.toml
+
+# Arquivos de saída gerados
+*_output.xlsx
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
