@@ -131,7 +131,10 @@ def extract_data(pdf_path, excel_out_path):
                     if re.search(r"Fluxo de Aprova", lines[k]):
                         break
                     consid_parts.append(lines[k])
-                val_consid = " ".join(consid_parts).strip()
+                if consid_parts:
+                    val_consid = consid_parts[0] + " - " + " ".join(consid_parts[1:]) if len(consid_parts) > 1 else consid_parts[0]
+                else:
+                    val_consid = ""
 
         # Aprovador and Nome do Aprovador: ALWAYS the first row in "Fluxo de Aprovações"
         # Strategy: find the Fluxo header, then scan for the FIRST date (DD.MM.YYYY).

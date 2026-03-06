@@ -110,7 +110,10 @@ def extract_data_from_bytes(pdf_bytes: bytes) -> pd.DataFrame:
                     if re.search(r"Fluxo de Aprova", lines[k]):
                         break
                     consid_parts.append(lines[k])
-                val_consid = " ".join(consid_parts).strip()
+                if consid_parts:
+                    val_consid = consid_parts[0] + " - " + " ".join(consid_parts[1:]) if len(consid_parts) > 1 else consid_parts[0]
+                else:
+                    val_consid = ""
 
         # ── Aprovador (FIRST row in Fluxo) ───────────────
         aprovador_id   = ""
